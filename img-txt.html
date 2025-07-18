@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free online OCR tool to extract text from images. Convert JPG, PNG, WEBP, BMP images to editable text instantly.">
+    <meta name="keywords" content="OCR, image to text, extract text from image, online OCR, free OCR tool">
+    <meta name="author" content="OCR Tool">
+    <meta property="og:title" content="Free Online OCR Tool - Extract Text from Images">
+    <meta property="og:description" content="Convert images to editable text with our free online OCR tool. Supports JPG, PNG, WEBP, BMP formats.">
+    <meta property="og:type" content="website">
+    <title>Free Online OCR Tool - Extract Text from Images</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --primary-light: #e8f0fe;
+            --secondary-color: #34a853;
+            --error-color: #ea4335;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --card-bg: #fff;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+            --border-radius: 12px;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #8ab4f8;
+            --primary-light: #1e3a8a;
+            --secondary-color: #81c995;
+            --error-color: #f28b82;
+            --text-color: #e8eaed;
+            --bg-color: #202124;
+            --card-bg: #303134;
+            --border-color: #5f6368;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            transition: var(--transition);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+
+        .description {
+            max-width: 800px;
+            margin: 0 auto 20px;
+            color: var(--text-color);
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .ad-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            border: 1px dashed var(--border-color);
+        }
+
+        .ad-label {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-section, .output-section {
+            width: 100%;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .section-title {
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .section-title svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+            position: relative;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drop-area:hover {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        .drop-area.highlight {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        .drop-area img {
+            max-width: 100%;
+            max-height: 300px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            object-fit: contain;
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            fill: var(--primary-color);
+            opacity: 0.8;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background-color: #e1f0ff;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0e4ff;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .image-preview-container {
+            position: relative;
+            margin-bottom: 15px;
+            width: 100%;
+            display: none;
+            max-height: 400px;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+        }
+
+        #imagePreview {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .image-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 6px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .image-control-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .image-control-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .image-control-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .enhancement-controls {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.03);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .enhancement-controls h3 {
+            margin-bottom: 15px;
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .control-group input {
+            width: 100%;
+            accent-color: var(--primary-color);
+        }
+
+        .output-text {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            resize: vertical;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.6;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+
+        .output-text:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .status-message {
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: none;
+            font-size: 15px;
+        }
+
+        .status-message.success {
+            background-color: rgba(52, 168, 83, 0.15);
+            border: 1px solid var(--secondary-color);
+            color: var(--secondary-color);
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: rgba(234, 67, 53, 0.15);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            display: block;
+        }
+
+        .paste-hint {
+            font-size: 14px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-top: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px 0;
+            margin-top: 40px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        footer p {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+                width: 36px;
+                height: 36px;
+            }
+            
+            .drop-area {
+                padding: 20px;
+                min-height: 180px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .description {
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 10px 18px;
+                font-size: 15px;
+            }
+            
+            .image-preview-container {
+                max-height: 300px;
+            }
+            
+            #imagePreview {
+                max-height: 300px;
+            }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tooltip for copy button */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" x2="12" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="23"></line>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" x2="3" y2="12"></line>
+                <line x1="21" y1="12" x2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+        </button>
+
+        <header>
+            <h1>Image to Text Converter</h1>
+            <p class="description">Extract text from images with our free online OCR tool. Simply upload or paste an image, and we'll convert it to editable text for you.</p>
+        </header>
+
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Google AdSense Placeholder -->
+            <div id="ad-unit-top">
+                <!-- Replace with your Google AdSense code -->
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID"></script>
+                <!-- Responsive Ad Unit -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+                     data-ad-slot="YOUR_AD_SLOT"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Upload Image
+                </h2>
+                
+                <div class="status-message" id="statusMessage"></div>
+                
+                <div class="drop-area" id="dropArea">
+                    <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"></path>
+                        <line x1="16" y1="5" x2="22" y2="5"></line>
+                        <line x1="19" y1="2" x2="19" y2="8"></line>
+                        <circle cx="9" cy="9" r="2"></circle>
+                        <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>
+                    </svg>
+                    <p>Drag & drop an image here or click to browse</p>
+                    <p class="paste-hint">You can also paste an image (Ctrl+V)</p>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                </div>
+                
+                <div class="image-preview-container" id="imagePreviewContainer">
+                    <img id="imagePreview" src="#" alt="Preview of uploaded image">
+                    <div class="image-controls">
+                        <button class="image-control-btn" id="rotateLeftBtn" title="Rotate left">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/>
+                            </svg>
+                        </button>
+                        <button class="image-control-btn" id="rotateRightBtn" title="Rotate right">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+                            </svg>
+                        </button>
+                        <button class="image-control-btn" id="removeImageBtn" title="Remove image">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="enhancement-controls" id="enhancementControls">
+                    <h3>Image Enhancement</h3>
+                    <div class="control-group">
+                        <label for="contrastControl">Contrast: <span id="contrastValue">100</span>%</label>
+                        <input type="range" id="contrastControl" min="50" max="200" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label for="brightnessControl">Brightness: <span id="brightnessValue">100</span>%</label>
+                        <input type="range" id="brightnessControl" min="50" max="200" value="100">
+                    </div>
+                    <div class="control-group">
+                        <label for="grayscaleControl">Grayscale: <span id="grayscaleValue">0</span>%</label>
+                        <input type="range" id="grayscaleControl" min="0" max="100" value="0">
+                    </div>
+                    <button class="btn btn-secondary" id="resetEnhancementBtn">Reset Adjustments</button>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn" id="extractTextBtn" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Extract Text
+                    </button>
+                    <button class="btn btn-secondary" id="clearAllBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Clear All
+                    </button>
+                </div>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress" id="progressBar"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">Initializing OCR engine...</p>
+                </div>
+            </div>
+            
+            <div class="output-section">
+                <h2 class="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Extracted Text
+                </h2>
+                
+                <textarea class="output-text" id="outputText" placeholder="Extracted text will appear here..." readonly></textarea>
+                
+                <div class="action-buttons">
+                    <button class="btn tooltip" id="copyTextBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy Text
+                        <span class="tooltiptext">Copy to clipboard</span>
+                    </button>
+                    <button class="btn btn-secondary" id="downloadTextBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download as TXT
+                    </button>
+                    <button class="btn btn-secondary" id="clearTextBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        Clear Text
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Google AdSense Placeholder -->
+            <div id="ad-unit-bottom">
+                <!-- Replace with your Google AdSense code -->
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID"></script>
+                <!-- Responsive Ad Unit -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+                     data-ad-slot="YOUR_AD_SLOT"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
+            </div>
+        </div>
+
+        <footer>
+            <p>© <span id="currentYear"></span> Image to Text Converter. All rights reserved.</p>
+            <p>This tool uses Tesseract.js for OCR processing, which runs entirely in your browser.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current year in footer
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            
+            // DOM elements
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const imagePreview = document.getElementById('imagePreview');
+            const extractTextBtn = document.getElementById('extractTextBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const outputText = document.getElementById('outputText');
+            const copyTextBtn = document.getElementById('copyTextBtn');
+            const downloadTextBtn = document.getElementById('downloadTextBtn');
+            const clearTextBtn = document.getElementById('clearTextBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const statusMessage = document.getElementById('statusMessage');
+            const rotateLeftBtn = document.getElementById('rotateLeftBtn');
+            const rotateRightBtn = document.getElementById('rotateRightBtn');
+            const removeImageBtn = document.getElementById('removeImageBtn');
+            const contrastControl = document.getElementById('contrastControl');
+            const brightnessControl = document.getElementById('brightnessControl');
+            const grayscaleControl = document.getElementById('grayscaleControl');
+            const resetEnhancementBtn = document.getElementById('resetEnhancementBtn');
+            const contrastValue = document.getElementById('contrastValue');
+            const brightnessValue = document.getElementById('brightnessValue');
+            const grayscaleValue = document.getElementById('grayscaleValue');
+            const enhancementControls = document.getElementById('enhancementControls');
+            const themeToggle = document.getElementById('themeToggle');
+            
+            // Variables
+            let currentImage = null;
+            let rotationAngle = 0;
+            let enhancementSettings = {
+                contrast: 100,
+                brightness: 100,
+                grayscale: 0
+            };
+            
+            // Initialize UI elements
+            imagePreviewContainer.style.display = 'none';
+            enhancementControls.style.display = 'none';
+            progressContainer.style.display = 'none';
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+            
+            // Theme toggle
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('highlight');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('highlight');
+            }
+            
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length) {
+                    handleFiles(files);
+                }
+            }
+            
+            // Handle file input
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files.length) {
+                    handleFiles(this.files);
+                }
+            });
+            
+            // Handle paste from clipboard
+            document.addEventListener('paste', function(e) {
+                const items = e.clipboardData.items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const blob = items[i].getAsFile();
+                        const file = new File([blob], 'pasted-image.png', { type: 'image/png' });
+                        handleFiles([file]);
+                        break;
+                    }
+                }
+            });
+            
+            // Handle files
+            function handleFiles(files) {
+                const file = files[0];
+                if (!file.type.match('image.*')) {
+                    showStatus('Please upload an image file (JPG, PNG, WEBP, BMP, etc.)', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImage = new Image();
+                    currentImage.onload = function() {
+                        displayImage(this);
+                    };
+                    currentImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Display image preview
+            function displayImage(image) {
+                imagePreview.src = image.src;
+                imagePreviewContainer.style.display = 'block';
+                enhancementControls.style.display = 'block';
+                extractTextBtn.disabled = false;
+                dropArea.style.display = 'none';
+                
+                // Reset enhancement settings
+                rotationAngle = 0;
+                enhancementSettings = {
+                    contrast: 100,
+                    brightness: 100,
+                    grayscale: 0
+                };
+                contrastControl.value = 100;
+                brightnessControl.value = 100;
+                grayscaleControl.value = 0;
+                contrastValue.textContent = '100';
+                brightnessValue.textContent = '100';
+                grayscaleValue.textContent = '0';
+                
+                applyImageEnhancements();
+            }
+            
+            // Rotate image left
+            rotateLeftBtn.addEventListener('click', function() {
+                rotationAngle = (rotationAngle - 90) % 360;
+                applyImageEnhancements();
+            });
+            
+            // Rotate image right
+            rotateRightBtn.addEventListener('click', function() {
+                rotationAngle = (rotationAngle + 90) % 360;
+                applyImageEnhancements();
+            });
+            
+            // Remove image
+            removeImageBtn.addEventListener('click', function() {
+                resetImage();
+            });
+            
+            // Image enhancement controls
+            contrastControl.addEventListener('input', function() {
+                enhancementSettings.contrast = this.value;
+                contrastValue.textContent = this.value;
+                applyImageEnhancements();
+            });
+            
+            brightnessControl.addEventListener('input', function() {
+                enhancementSettings.brightness = this.value;
+                brightnessValue.textContent = this.value;
+                applyImageEnhancements();
+            });
+            
+            grayscaleControl.addEventListener('input', function() {
+                enhancementSettings.grayscale = this.value;
+                grayscaleValue.textContent = this.value;
+                applyImageEnhancements();
+            });
+            
+            // Reset enhancement controls
+            resetEnhancementBtn.addEventListener('click', function() {
+                enhancementSettings = {
+                    contrast: 100,
+                    brightness: 100,
+                    grayscale: 0
+                };
+                contrastControl.value = 100;
+                brightnessControl.value = 100;
+                grayscaleControl.value = 0;
+                contrastValue.textContent = '100';
+                brightnessValue.textContent = '100';
+                grayscaleValue.textContent = '0';
+                rotationAngle = 0;
+                applyImageEnhancements();
+            });
+            
+            // Apply image enhancements
+            function applyImageEnhancements() {
+                if (!currentImage) return;
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas dimensions based on rotation
+                if (rotationAngle === 90 || rotationAngle === 270) {
+                    canvas.width = currentImage.height;
+                    canvas.height = currentImage.width;
+                } else {
+                    canvas.width = currentImage.width;
+                    canvas.height = currentImage.height;
+                }
+                
+                // Translate and rotate canvas
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(rotationAngle * Math.PI / 180);
+                
+                // Draw image with rotation
+                ctx.drawImage(
+                    currentImage,
+                    -currentImage.width / 2,
+                    -currentImage.height / 2,
+                    currentImage.width,
+                    currentImage.height
+                );
+                
+                // Apply filters
+                let filter = '';
+                filter += `contrast(${enhancementSettings.contrast}%) `;
+                filter += `brightness(${enhancementSettings.brightness}%) `;
+                filter += `grayscale(${enhancementSettings.grayscale}%)`;
+                
+                imagePreview.style.filter = filter;
+                imagePreview.src = canvas.toDataURL('image/png');
+            }
+            
+            // Reset image
+            function resetImage() {
+                currentImage = null;
+                imagePreviewContainer.style.display = 'none';
+                enhancementControls.style.display = 'none';
+                extractTextBtn.disabled = true;
+                dropArea.style.display = 'flex';
+                outputText.value = '';
+            }
+            
+            // Clear all
+            clearAllBtn.addEventListener('click', resetImage);
+            
+            // Clear text
+            clearTextBtn.addEventListener('click', function() {
+                outputText.value = '';
+            });
+            
+            // Copy text
+            copyTextBtn.addEventListener('click', function() {
+                if (!outputText.value) {
+                    showStatus('No text to copy', 'error');
+                    return;
+                }
+                
+                outputText.select();
+                document.execCommand('copy');
+                
+                // Show tooltip
+                const originalText = copyTextBtn.innerHTML;
+                copyTextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                
+                setTimeout(() => {
+                    copyTextBtn.innerHTML = originalText;
+                }, 2000);
+                
+                showStatus('Text copied to clipboard', 'success');
+            });
+            
+            // Download text
+            downloadTextBtn.addEventListener('click', function() {
+                if (!outputText.value) {
+                    showStatus('No text to download', 'error');
+                    return;
+                }
+                
+                const blob = new Blob([outputText.value], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'extracted-text.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('Text downloaded', 'success');
+            });
+            
+            // Extract text
+            extractTextBtn.addEventListener('click', function() {
+                if (!currentImage) {
+                    showStatus('No image to process', 'error');
+                    return;
+                }
+                
+                // Show progress
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Initializing OCR engine...';
+                
+                // Disable button during processing
+                extractTextBtn.disabled = true;
+                extractTextBtn.innerHTML = '<span class="spinner"></span> Processing...';
+                
+                // Create canvas with current image (including enhancements)
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = imagePreview.naturalWidth;
+                canvas.height = imagePreview.naturalHeight;
+                
+                // Apply rotation to canvas
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(rotationAngle * Math.PI / 180);
+                ctx.drawImage(
+                    currentImage,
+                    -currentImage.width / 2,
+                    -currentImage.height / 2,
+                    currentImage.width,
+                    currentImage.height
+                );
+                
+                // Apply filters
+                ctx.filter = `contrast(${enhancementSettings.contrast}%) brightness(${enhancementSettings.brightness}%) grayscale(${enhancementSettings.grayscale}%)`;
+                ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+                
+                // Use Tesseract.js for OCR
+                Tesseract.recognize(
+                    canvas.toDataURL('image/png'),
+                    'eng',
+                    {
+                        logger: m => {
+                            if (m.status === 'recognizing text') {
+                                progressBar.style.width = `${Math.round(m.progress * 100)}%`;
+                                progressText.textContent = `Processing: ${Math.round(m.progress * 100)}%`;
+                            } else {
+                                progressText.textContent = m.status;
+                            }
+                        }
+                    }
+                ).then(({ data: { text } }) => {
+                    outputText.value = text;
+                    showStatus('Text extraction completed successfully', 'success');
+                }).catch(err => {
+                    console.error('OCR Error:', err);
+                    showStatus('Error during text extraction: ' + err.message, 'error');
+                }).finally(() => {
+                    progressContainer.style.display = 'none';
+                    extractTextBtn.disabled = false;
+                    extractTextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Extract Text';
+                });
+            });
+            
+            // Show status message
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = 'status-message ' + type;
+                statusMessage.style.display = 'block';
+                
+                // Hide after 5 seconds
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
